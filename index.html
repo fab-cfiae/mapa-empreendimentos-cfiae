@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Credenciamento - CFIAe</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        /* Styling for the SVG Map */
+        .estado-svg {
+            fill: #cbd5e1;
+            stroke: #ffffff;
+            stroke-width: 1.25;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            outline: none;
+        }
+
+        .estado-svg:hover {
+            fill: #2563eb !important;
+            filter: drop-shadow(0px 6px 12px rgba(37, 99, 235, 0.35));
+            stroke: #ffffff;
+            stroke-width: 2;
+        }
+
+        /* States with active projects */
+        .estado-ativo {
+            fill: #1d60cd;
+        }
+
+        .estado-ativo-alta {
+            fill: #0d3b85;
+        }
+
+        /* State selected indicator */
+        .estado-selecionado {
+            fill: #0284c7 !important;
+            stroke: #38bdf8 !important;
+            stroke-width: 2.5 !important;
+            filter: drop-shadow(0px 8px 16px rgba(2, 132, 199, 0.45));
+        }
+
+        /* Pulse animation for active badges */
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.85; }
+        }
+
+        .pulse-badge {
+            animation: pulse-soft 2.5s infinite;
+        }
+
+        /* Custom Scrollbar for sidebar list */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Floating Tooltip Styling */
+        #tooltip {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.15s ease, transform 0.1s ease;
+            box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-blue-600 selection:text-white">
+
+    <!-- CABEÇALHO OFICIAL CFIAe -->
+    <header class="w-full shadow-md z-30">
+        <!-- Barra Superior Principal (Azul Royal CFIAe) -->
+        <div class="w-full bg-[#1d60cd] text-white px-4 py-4 md:px-8">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                
+                <div class="flex items-center gap-4 sm:gap-6 text-center sm:text-left">
+                    <!-- Escudo / Logo Vetorial CFIAe -->
+                    <div class="relative bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/20 shadow-inner flex items-center justify-center shrink-0">
+                        <svg class="w-14 h-16 md:w-16 md:h-18" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Shield Outer Shape -->
+                            <path d="M50 5 L92 20 V60 C92 90 50 115 50 115 C50 115 8 90 8 60 V20 L50 5 Z" fill="#1b52ac" stroke="#ffffff" stroke-width="4"/>
+                            <!-- Inner Border -->
+                            <path d="M50 12 L85 24 V58 C85 83 50 105 50 105 C50 105 15 83 15 58 V24 L50 12 Z" fill="#1d60cd" stroke="#facc15" stroke-width="2"/>
+                            <!-- Wings Icon (FAB theme) -->
+                            <path d="M22 42 Q50 32 78 42 Q50 50 22 42 Z" fill="#ffffff"/>
+                            <path d="M30 46 L50 38 L70 46 L50 54 Z" fill="#facc15"/>
+                            <!-- House Icon (Housing Theme) -->
+                            <path d="M50 55 L72 72 H62 V92 H38 V72 H28 Z" fill="#ffffff" stroke="#1d60cd" stroke-width="2"/>
+                            <rect x="44" y="78" width="12" height="14" fill="#facc15"/>
+                            <!-- CFIAe Text Banner -->
+                            <rect x="20" y="24" width="60" height="14" rx="3" fill="#0d3b85"/>
+                            <text x="50" y="34" font-family="Arial" font-weight="900" font-size="10" fill="#ffffff" text-anchor="middle">CFIAe</text>
+                        </svg>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <span class="text-xs md:text-sm font-light tracking-widest uppercase opacity-90 text-blue-100 flex items-center justify-center sm:justify-start gap-1.5">
+                            <i data-lucide="shield" class="w-3.5 h-3.5 text-yellow-400"></i>
+                            Força Aérea Brasileira
+                        </span>
+                        <h1 class="text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight text-white leading-tight mt-0.5">
+                            Caixa de Financiamento Imobiliário da Aeronáutica
+                        </h1>
+                        <p class="text-xs md:text-sm text-blue-200 mt-0.5 font-medium">
+                            Sistema de Gerenciamento de Empreendimentos Credenciados
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação do Header -->
+                <div class="flex items-center gap-2">
+                    <button id="btnResetView" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-xs md:text-sm font-semibold px-4 py-2.5 rounded-lg border border-white/20 transition-all shadow-sm">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>Redefinir Visão</span>
+                    </button>
+                    <a href="https://www.cfiae.fab.mil.br" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-slate-950 text-xs md:text-sm font-bold px-4 py-2.5 rounded-lg transition-all shadow-md">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Portal Oficial</span>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Sub-barra Inferior (Azul Marinho com Slogan) -->
+        <div class="w-full bg-[#1b52ac] py-2 px-4 border-t border-blue-400/20">
+            <div class="max-w-7xl mx-auto flex justify-between items-center text-xs">
+                <span class="font-bold tracking-widest text-blue-100 uppercase mx-auto text-center md:text-left flex items-center gap-2">
+                    <span class="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-ping"></span>
+                    "UM SONHO, UM IDEAL, UMA MORADIA DIGNA!"
+                </span>
+                <span class="hidden md:flex items-center gap-4 text-blue-200 text-xs">
+                    <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Cobertura Nacional</span>
+                    <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i> Atualizado em 2026</span>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL (LAYOUT EM DASHBOARD) -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-6">
+
+        <!-- CARDS DE MÉTRICAS RÁPIDAS -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Empreendimentos</p>
+                    <h3 id="statTotalEmpreendimentos" class="text-3xl font-black text-slate-900 mt-1">62</h3>
+                    <p class="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                        <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Empreendimentos ativos
+                    </p>
+                </div>
+                <div class="p-3.5 bg-blue-50 text-blue-600 rounded-xl">
+                    <i data-lucide="building-2" class="w-7 h-7"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Estados Atendidos</p>
+                    <h3 id="statEstadosAtendidos" class="text-3xl font-black text-slate-900 mt-1">10 <span class="text-sm font-normal text-slate-400">/ 27</span></h3>
+                    <p class="text-xs text-blue-600 font-medium mt-1">37% das Unidades da Federação</p>
+                </div>
+                <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <i data-lucide="map" class="w-7 h-7"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Maior Concentração</p>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1">Rio de Janeiro</h3>
+                    <p class="text-xs text-blue-600 font-bold mt-1 flex items-center gap-1">
+                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-extrabold">31</span> Empreendimentos
+                    </p>
+                </div>
+                <div class="p-3.5 bg-amber-50 text-amber-600 rounded-xl">
+                    <i data-lucide="award" class="w-7 h-7"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Região em Destaque</p>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1">Sudeste</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-1">36 Empreendimentos no total</p>
+                </div>
+                <div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <i data-lucide="compass" class="w-7 h-7"></i>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- AREA DE TRABALHO: MAPA + PAINEL DE DETALHES -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- COLUNA ESQUERDA: MAPA DO BRASIL SVG (8 colunas) -->
+            <div class="lg:col-span-7 xl:col-span-7 bg-white p-5 md:p-6 rounded-2xl border border-slate-200/80 shadow-sm relative flex flex-col items-center">
+                
+                <!-- Barra de Ferramentas / Filtros do Mapa -->
+                <div class="w-full flex flex-col sm:flex-row items-center justify-between gap-3 mb-4 pb-4 border-b border-slate-100">
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <i data-lucide="filter" class="w-4 h-4 text-slate-400"></i>
+                        <span class="text-xs font-bold text-slate-600 uppercase">Filtrar Região:</span>
+                    </div>
+                    
+                    <!-- Chips de Regiões -->
+                    <div class="flex flex-wrap gap-1.5 w-full sm:w-auto">
+                        <button class="btn-regiao active bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all" data-regiao="TODAS">Todas</button>
+                        <button class="btn-regiao bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-all" data-regiao="SE">Sudeste</button>
+                        <button class="btn-regiao bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-all" data-regiao="NE">Nordeste</button>
+                        <button class="btn-regiao bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-all" data-regiao="S">Sul</button>
+                        <button class="btn-regiao bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-all" data-regiao="N">Norte</button>
+                        <button class="btn-regiao bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-all" data-regiao="CO">Centro-Oeste</button>
+                    </div>
+                </div>
+
+                <!-- Container do Mapa SVG Interativo -->
+                <div class="relative w-full max-w-[620px] aspect-[1/0.95] flex items-center justify-center p-2">
+                    
+                    <!-- SVG do Mapa do Brasil com todos os 27 estados -->
+                    <svg id="mapaBrasilSVG" viewBox="0 0 610 600" class="w-full h-full drop-shadow-md select-none" xmlns="http://www.w3.org/2000/svg">
+                        <g id="estadosGroup">
+                            <!-- AC -->
+                            <path id="BR-AC" class="estado-svg" data-nome="Acre" data-uf="AC" data-regiao="N" d="M38.8,251.2 L45.2,250.1 L55.5,255.4 L67.8,253.3 L77.3,258.9 L88.2,257.6 L92.1,263.8 L88.5,269.8 L80.1,273.2 L68.2,271.8 L61.1,277.8 L48.8,276.5 L39.2,282.1 L25.5,272.5 L28.2,263.2 Z"/>
+                            <!-- AM -->
+                            <path id="BR-AM" class="estado-svg" data-nome="Amazonas" data-uf="AM" data-regiao="N" d="M60.2,142.1 L90.5,138.2 L120.8,145.5 L145.1,130.2 L168.2,148.8 L185.2,142.8 L195.8,162.5 L180.2,185.2 L172.5,212.8 L152.1,225.8 L138.2,218.5 L115.8,245.8 L92.1,263.8 L88.2,257.6 L77.3,258.9 L67.8,253.3 L55.5,255.4 L45.2,250.1 L38.8,251.2 L35.2,230.1 L52.1,198.5 Z"/>
+                            <!-- RR -->
+                            <path id="BR-RR" class="estado-svg" data-nome="Roraima" data-uf="RR" data-regiao="N" d="M142.1,65.2 L165.2,52.1 L182.5,72.8 L188.2,102.5 L168.2,148.8 L145.1,130.2 L132.5,108.2 Z"/>
+                            <!-- PA -->
+                            <path id="BR-PA" class="estado-svg" data-nome="Pará" data-uf="PA" data-regiao="N" d="M185.2,142.8 L210.5,125.8 L245.2,118.2 L278.2,135.2 L308.2,130.5 L328.2,158.2 L315.2,188.2 L285.2,192.5 L270.2,225.8 L238.2,235.2 L225.2,212.8 L195.8,162.5 Z"/>
+                            <!-- AP -->
+                            <path id="BR-AP" class="estado-svg" data-nome="Amapá" data-uf="AP" data-regiao="N" d="M280.2,85.2 L310.2,72.5 L325.2,105.8 L298.2,128.2 L278.2,135.2 L280.2,85.2 Z"/>
+                            <!-- RO -->
+                            <path id="BR-RO" class="estado-svg" data-nome="Rondônia" data-uf="RO" data-regiao="N" d="M115.8,245.8 L138.2,218.5 L152.1,225.8 L172.5,212.8 L180.2,238.2 L168.2,268.2 L142.1,285.2 L128.2,275.2 Z"/>
+                            <!-- TO -->
+                            <path id="BR-TO" class="estado-svg" data-nome="Tocantins" data-uf="TO" data-regiao="N" d="M285.2,192.5 L315.2,188.2 L328.2,222.8 L318.2,268.2 L292.1,282.5 L280.2,258.2 L270.2,225.8 Z"/>
+                            <!-- MA -->
+                            <path id="BR-MA" class="estado-svg" data-nome="Maranhão" data-uf="MA" data-regiao="NE" d="M308.2,130.5 L348.2,142.8 L375.2,168.2 L368.2,205.2 L338.2,212.8 L328.2,158.2 Z"/>
+                            <!-- PI -->
+                            <path id="BR-PI" class="estado-svg" data-nome="Piauí" data-uf="PI" data-regiao="NE" d="M375.2,168.2 L398.2,178.2 L405.2,218.2 L378.2,248.2 L368.2,205.2 Z"/>
+                            <!-- CE -->
+                            <path id="BR-CE" class="estado-svg" data-nome="Ceará" data-uf="CE" data-regiao="NE" d="M398.2,178.2 L438.2,168.2 L448.2,195.2 L418.2,212.8 L405.2,218.2 Z"/>
+                            <!-- RN -->
+                            <path id="BR-RN" class="estado-svg" data-nome="Rio Grande do Norte" data-uf="RN" data-regiao="NE" d="M438.2,168.2 L472.2,175.2 L468.2,198.2 L448.2,195.2 Z"/>
+                            <!-- PB -->
+                            <path id="BR-PB" class="estado-svg" data-nome="Paraíba" data-uf="PB" data-regiao="NE" d="M448.2,195.2 L478.2,198.2 L472.2,215.2 L438.2,212.8 Z"/>
+                            <!-- PE -->
+                            <path id="BR-PE" class="estado-svg" data-nome="Pernambuco" data-uf="PE" data-regiao="NE" d="M418.2,212.8 L472.2,215.2 L462.2,232.8 L405.2,228.2 Z"/>
+                            <!-- AL -->
+                            <path id="BR-AL" class="estado-svg" data-nome="Alagoas" data-uf="AL" data-regiao="NE" d="M445.2,232.8 L462.2,232.8 L455.2,248.2 L438.2,242.8 Z"/>
+                            <!-- SE -->
+                            <path id="BR-SE" class="estado-svg" data-nome="Sergipe" data-uf="SE" data-regiao="NE" d="M438.2,242.8 L455.2,248.2 L442.2,262.8 L430.2,252.8 Z"/>
+                            <!-- BA -->
+                            <path id="BR-BA" class="estado-svg" data-nome="Bahia" data-uf="BA" data-regiao="NE" d="M338.2,212.8 L368.2,205.2 L378.2,248.2 L405.2,228.2 L442.2,262.8 L428.2,305.2 L398.2,328.2 L368.2,315.2 L358.2,268.2 L328.2,222.8 Z"/>
+                            <!-- MT -->
+                            <path id="BR-MT" class="estado-svg" data-nome="Mato Grosso" data-uf="MT" data-regiao="CO" d="M180.2,238.2 L238.2,235.2 L270.2,225.8 L280.2,258.2 L268.2,318.2 L215.2,338.2 L195.2,315.2 L168.2,268.2 Z"/>
+                            <!-- GO -->
+                            <path id="BR-GO" class="estado-svg" data-nome="Goiás" data-uf="GO" data-regiao="CO" d="M280.2,258.2 L292.1,282.5 L328.2,268.2 L358.2,268.2 L345.2,328.2 L308.2,342.8 L268.2,318.2 Z"/>
+                            <!-- DF -->
+                            <path id="BR-DF" class="estado-svg" data-nome="Distrito Federal" data-uf="DF" data-regiao="CO" d="M312.2,292.2 L322.2,292.2 L322.2,302.2 L312.2,302.2 Z"/>
+                            <!-- MS -->
+                            <path id="BR-MS" class="estado-svg" data-nome="Mato Grosso do Sul" data-uf="MS" data-regiao="CO" d="M215.2,338.2 L268.2,318.2 L308.2,342.8 L288.2,388.2 L248.2,398.2 L225.2,372.5 Z"/>
+                            <!-- MG -->
+                            <path id="BR-MG" class="estado-svg" data-nome="Minas Gerais" data-uf="MG" data-regiao="SE" d="M345.2,328.2 L368.2,315.2 L398.2,328.2 L408.2,368.2 L378.2,398.2 L338.2,392.5 L308.2,342.8 Z"/>
+                            <!-- ES -->
+                            <path id="BR-ES" class="estado-svg" data-nome="Espírito Santo" data-uf="ES" data-regiao="SE" d="M398.2,328.2 L418.2,342.8 L408.2,368.2 Z"/>
+                            <!-- RJ -->
+                            <path id="BR-RJ" class="estado-svg" data-nome="Rio de Janeiro" data-uf="RJ" data-regiao="SE" d="M378.2,398.2 L408.2,368.2 L395.2,408.2 L365.2,412.8 Z"/>
+                            <!-- SP -->
+                            <path id="BR-SP" class="estado-svg" data-nome="São Paulo" data-uf="SP" data-regiao="SE" d="M288.2,388.2 L308.2,342.8 L338.2,392.5 L378.2,398.2 L365.2,412.8 L308.2,422.8 L275.2,412.8 Z"/>
+                            <!-- PR -->
+                            <path id="BR-PR" class="estado-svg" data-nome="Paraná" data-uf="PR" data-regiao="S" d="M248.2,398.2 L288.2,388.2 L308.2,422.8 L285.2,448.2 L245.2,438.2 Z"/>
+                            <!-- SC -->
+                            <path id="BR-SC" class="estado-svg" data-nome="Santa Catarina" data-uf="SC" data-regiao="S" d="M245.2,438.2 L285.2,448.2 L278.2,472.8 L248.2,462.8 Z"/>
+                            <!-- RS -->
+                            <path id="BR-RS" class="estado-svg" data-nome="Rio Grande do Sul" data-uf="RS" data-regiao="S" d="M248.2,462.8 L278.2,472.8 L265.2,528.2 L225.2,512.8 L218.2,475.2 Z"/>
+                        </g>
+
+                        <!-- Pin Overlay Markers for High Concentration States -->
+                        <g id="pinMarkersGroup">
+                            <!-- Pins serão gerados dinamicamente no JS para estados com mais empreendimentos -->
+                        </g>
+                    </svg>
+
+                </div>
+
+                <!-- Legenda do Mapa Integrada -->
+                <div class="w-full mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">Legenda:</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded-sm bg-[#cbd5e1] inline-block border border-slate-300"></span>
+                            <span>Sem Empreendimentos</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded-sm bg-[#1d60cd] inline-block"></span>
+                            <span>Com Empreendimentos (1 a 10)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded-sm bg-[#0d3b85] inline-block"></span>
+                            <span>Alta Concentração (&gt; 10)</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- COLUNA DIREITA: PAINEL LATERAL DE BUSCA E DETALHES (5 colunas) -->
+            <div class="lg:col-span-5 xl:col-span-5 flex flex-col gap-4">
+                
+                <!-- CARD DE BUSCA E FILTRO COMPACTO -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 mb-3">
+                        <i data-lucide="search" class="w-4 h-4 text-blue-600"></i>
+                        Localizar Estado ou Unidade
+                    </h2>
+                    
+                    <div class="relative">
+                        <input type="text" id="inputBuscaEstado" placeholder="Digite o nome do estado ou UF (ex: RJ, SP, Bahia)..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                        <button id="btnClearSearch" class="hidden absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs bg-slate-200 hover:bg-slate-300 rounded-full w-5 h-5 flex items-center justify-center">✕</button>
+                    </div>
+                </div>
+
+                <!-- CARD PRINCIPAL DE DETALHES DO ESTADO SELECIONADO -->
+                <div class="bg-white p-5 md:p-6 rounded-2xl border border-slate-200/80 shadow-sm flex-1 flex flex-col min-h-[420px]">
+                    
+                    <!-- Header do Card de Estado -->
+                    <div class="pb-4 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                            <span id="labelUFSelected" class="text-xs font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
+                                Brasil (Visão Geral)
+                            </span>
+                            <h2 id="titleEstadoSelected" class="text-xl font-black text-slate-900 mt-2">
+                                Selecione um Estado no Mapa
+                            </h2>
+                        </div>
+                        <div id="badgeCountSelected" class="hidden bg-blue-600 text-white font-black text-lg px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1">
+                            <span>0</span>
+                            <span class="text-xs font-normal opacity-80">unidades</span>
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo do Card (Lista de Empreendimentos ou Estado Vazio) -->
+                    <div id="containerListaEmpreendimentos" class="mt-4 flex-1 overflow-y-auto max-h-[350px] custom-scrollbar pr-1">
+                        
+                        <!-- Mensagem Padrão quando nenhum estado é clicado -->
+                        <div id="stateDefaultMessage" class="h-full flex flex-col items-center justify-center text-center py-8 text-slate-400">
+                            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-3">
+                                <i data-lucide="mouse-pointer-click" class="w-8 h-8"></i>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-600">Nenhum estado selecionado</p>
+                            <p class="text-xs text-slate-400 max-w-[240px] mt-1">
+                                Clique em qualquer estado destacado no mapa acima para visualizar a lista completa de empreendimentos e cotações.
+                            </p>
+                        </div>
+
+                        <!-- Lista Dinâmica de Empreendimentos (Injetada via JavaScript) -->
+                        <div id="listaEmpreendimentosContent" class="space-y-3 hidden">
+                            <!-- Cards de empreendimentos serão inseridos aqui -->
+                        </div>
+
+                    </div>
+
+                    <!-- Rodapé informativo do card -->
+                    <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="info" class="w-3.5 h-3.5 text-blue-500"></i>
+                            Dados atualizados e sincronizados
+                        </span>
+                        <a href="https://www.cfiae.fab.mil.br" target="_blank" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                            Edital Completo <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- TOOLTIP FLUTUANTE PREMIUM (CARD FLUTUANTE) -->
+    <div id="tooltip" class="hidden opacity-0 bg-white/95 backdrop-blur-md rounded-xl p-3.5 border border-slate-200/90 shadow-2xl pointer-events-none transition-all duration-150 min-w-[200px]">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+            <span id="tooltipStateName" class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                <!-- Nome do Estado -->
+            </span>
+            <span id="tooltipUF" class="text-[10px] font-black uppercase bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                <!-- UF -->
+            </span>
+        </div>
+        <div class="flex items-center justify-between gap-3 text-xs">
+            <span class="text-slate-500 font-medium">Empreendimentos:</span>
+            <span id="tooltipBadgeCount" class="bg-blue-600 text-white font-extrabold text-xs px-2.5 py-0.5 rounded-lg shadow-sm">
+                0
+            </span>
+        </div>
+        <div id="tooltipStatusText" class="mt-2 text-[10px] font-medium text-slate-400 border-t border-slate-100 pt-1.5 flex items-center justify-between">
+            <!-- Clique para ver detalhes -->
+        </div>
+    </div>
+
+    <!-- RODAPÉ INSTITUCIONAL -->
+    <footer class="w-full bg-slate-900 text-slate-400 text-xs py-6 px-4 mt-8 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+            <div>
+                <p class="font-semibold text-slate-300">Caixa de Financiamento Imobiliário da Aeronáutica — CFIAe</p>
+                <p class="text-slate-500 mt-0.5">Ministério da Defesa — Comando da Aeronáutica</p>
+            </div>
+            <p class="text-slate-500">
+                &copy; 2026 CFIAe. Todos os direitos reservados.
+            </p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT DE LÓGICA E INTERATIVIDADE -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            
+            // Inicializar Lucide Icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // BD DE ESTADOS COM DADOS DE EMPREENDIMENTOS DA CFIAe
+            const estadosData = {
+                "BR-AC": { nome: "Acre", uf: "AC", quantidade: 0, regiao: "N", cidades: [] },
+                "BR-AL": { nome: "Alagoas", uf: "AL", quantidade: 0, regiao: "NE", cidades: [] },
+                "BR-AP": { nome: "Amapá", uf: "AP", quantidade: 0, regiao: "N", cidades: [] },
+                "BR-AM": { 
+                    nome: "Amazonas", uf: "AM", quantidade: 3, regiao: "N", 
+                    cidades: [
+                        { nome: "Manaus - Ponta Negra", tipo: "Residencial Aeroclube", status: "Inscrições Abertas" },
+                        { nome: "Manaus - Flores", tipo: "Condomínio Barão do Rio Branco", status: "Em Construção" },
+                        { nome: "Manaus - Adrianópolis", tipo: "Residencial das Garças", status: "Concluído" }
+                    ] 
+                },
+                "BR-BA": { 
+                    nome: "Bahia", uf: "BA", quantidade: 4, regiao: "NE",
+                    cidades: [
+                        { nome: "Salvador - Pituba", tipo: "Residencial Farol da Barra", status: "Em Construção" },
+                        { nome: "Salvador - Imbuí", tipo: "Condomínio Asas do Sul", status: "Inscrições Abertas" },
+                        { nome: "Lauro de Freitas", tipo: "Residencial Aeroporto", status: "Lançamento" },
+                        { nome: "Feira de Santana", tipo: "Condomínio Monte Pascoal", status: "Concluído" }
+                    ]
+                },
+                "BR-CE": { nome: "Ceará", uf: "CE", quantidade: 0, regiao: "NE", cidades: [] },
+                "BR-DF": { 
+                    nome: "Distrito Federal", uf: "DF", quantidade: 4, regiao: "CO",
+                    cidades: [
+                        { nome: "Brasília - Asa Sul (SQS 210)", tipo: "Residencial Esplanada", status: "Inscrições Abertas" },
+                        { nome: "Brasília - Noroeste", tipo: "Condomínio Asas de Ouro", status: "Em Construção" },
+                        { nome: "Gama - Setor Central", tipo: "Residencial Cruzeiro do Sul", status: "Lançamento" },
+                        { nome: "Taguatinga Norte", tipo: "Condomínio Alvorada", status: "Concluído" }
+                    ]
+                },
+                "BR-ES": { nome: "Espírito Santo", uf: "ES", quantidade: 0, regiao: "SE", cidades: [] },
+                "BR-GO": { nome: "Goiás", uf: "GO", quantidade: 0, regiao: "CO", cidades: [] },
+                "BR-MA": { nome: "Maranhão", uf: "MA", quantidade: 0, regiao: "NE", cidades: [] },
+                "BR-MT": { nome: "Mato Grosso", uf: "MT", quantidade: 0, regiao: "CO", cidades: [] },
+                "BR-MS": { nome: "Mato Grosso do Sul", uf: "MS", quantidade: 0, regiao: "CO", cidades: [] },
+                "BR-MG": { nome: "Minas Gerais", uf: "MG", quantidade: 0, regiao: "SE", cidades: [] },
+                "BR-PA": { 
+                    nome: "Pará", uf: "PA", quantidade: 1, regiao: "N",
+                    cidades: [
+                        { nome: "Belém - Val-de-Cans", tipo: "Residencial das Mangueiras", status: "Inscrições Abertas" }
+                    ]
+                },
+                "BR-PB": { 
+                    nome: "Paraíba", uf: "PB", quantidade: 3, regiao: "NE",
+                    cidades: [
+                        { nome: "João Pessoa - Bessa", tipo: "Residencial Cabo Branco", status: "Em Construção" },
+                        { nome: "João Pessoa - Manaíra", tipo: "Condomínio Asas do Nordeste", status: "Inscrições Abertas" },
+                        { nome: "Campina Grande", tipo: "Residencial Borborema", status: "Concluído" }
+                    ]
+                },
+                "BR-PR": { 
+                    nome: "Paraná", uf: "PR", quantidade: 4, regiao: "S",
+                    cidades: [
+                        { nome: "Curitiba - Bacacheri", tipo: "Residencial Cindacta II", status: "Inscrições Abertas" },
+                        { nome: "Curitiba - Batel", tipo: "Condomínio Araucária", status: "Em Construção" },
+                        { nome: "São José dos Pinhais", tipo: "Residencial Afonso Pena", status: "Lançamento" },
+                        { nome: "Londrina", tipo: "Residencial Asas do Sul", status: "Concluído" }
+                    ]
+                },
+                "BR-PE": { 
+                    nome: "Pernambuco", uf: "PE", quantidade: 6, regiao: "NE",
+                    cidades: [
+                        { nome: "Recife - Boa Viagem", tipo: "Residencial Guararapes", status: "Inscrições Abertas" },
+                        { nome: "Recife - Piedade", tipo: "Condomínio Mar de Piedade", status: "Em Construção" },
+                        { nome: "Jaboatão dos Guararapes", tipo: "Residencial Brigadeiro Sampaio", status: "Inscrições Abertas" },
+                        { nome: "Olinda - Casa Caiada", tipo: "Condomínio Olinda das Asas", status: "Lançamento" },
+                        { nome: "Recife - Espinheiro", tipo: "Residencial Capibaribe", status: "Concluído" },
+                        { nome: "Caruaru", tipo: "Condomínio Agrestino", status: "Em Estudo" }
+                    ]
+                },
+                "BR-PI": { nome: "Piauí", uf: "PI", quantidade: 0, regiao: "NE", cidades: [] },
+                "BR-RJ": { 
+                    nome: "Rio de Janeiro", uf: "RJ", quantidade: 31, regiao: "SE",
+                    cidades: [
+                        { nome: "Rio de Janeiro - Galeão / Ilha", tipo: "Residencial Asas do Galeão", status: "Inscrições Abertas" },
+                        { nome: "Rio de Janeiro - Recreio dos Bandeirantes", tipo: "Condomínio Pontal da Barra", status: "Em Construção" },
+                        { nome: "Rio de Janeiro - Campo Grande", tipo: "Residencial Marechal Mallet", status: "Inscrições Abertas" },
+                        { nome: "Niterói - Icaraí", tipo: "Residencial Baía de Guanabara", status: "Em Construção" },
+                        { nome: "Resende - Centro", tipo: "Condomínio Agulhas Negras", status: "Lançamento" },
+                        { nome: "São Gonçalo", tipo: "Residencial Guanabara", status: "Concluído" },
+                        { nome: "Cabuçu / Nova Iguaçu", tipo: "Condomínio Baixada Azul", status: "Inscrições Abertas" },
+                        { nome: "Outros 24 Empreendimentos no RJ", tipo: "Diversas Unidades / Várias Regiões", status: "Consulte o Edital" }
+                    ]
+                },
+                "BR-RN": { 
+                    nome: "Rio Grande do Norte", uf: "RN", quantidade: 5, regiao: "NE",
+                    cidades: [
+                        { nome: "Natal - Parnamirim", tipo: "Residencial Trampolim da Vitória", status: "Inscrições Abertas" },
+                        { nome: "Natal - Capim Macio", tipo: "Condomínio Asas de Natal", status: "Em Construção" },
+                        { nome: "Natal - Ponta Negra", tipo: "Residencial Morro do Careca", status: "Inscrições Abertas" },
+                        { nome: "Parnamirim - Centro", tipo: "Residencial BANT", status: "Concluído" },
+                        { nome: "Macaíba", tipo: "Condomínio Potiguar", status: "Lançamento" }
+                    ]
+                },
+                "BR-RS": { nome: "Rio Grande do Sul", uf: "RS", quantidade: 0, regiao: "S", cidades: [] },
+                "BR-RO": { nome: "Rondônia", uf: "RO", quantidade: 0, regiao: "N", cidades: [] },
+                "BR-RR": { nome: "Roraima", uf: "RR", quantidade: 0, regiao: "N", cidades: [] },
+                "BR-SC": { nome: "Santa Catarina", uf: "SC", quantidade: 0, regiao: "S", cidades: [] },
+                "BR-SP": { 
+                    nome: "São Paulo", uf: "SP", quantidade: 5, regiao: "SE",
+                    cidades: [
+                        { nome: "São Paulo - Campo Belo", tipo: "Residencial Congonhas", status: "Inscrições Abertas" },
+                        { nome: "Guarulhos - Cumbica", tipo: "Condomínio Asas de São Paulo", status: "Em Construção" },
+                        { nome: "Pirassununga", tipo: "Residencial AFA / Academia", status: "Inscrições Abertas" },
+                        { nome: "São José dos Campos", tipo: "Condomínio ITA / DCTA", status: "Em Construção" },
+                        { nome: "Santos - Gonzaga", tipo: "Residencial Litoral Azul", status: "Lançamento" }
+                    ]
+                },
+                "BR-SE": { nome: "Sergipe", uf: "SE", quantidade: 0, regiao: "NE", cidades: [] },
+                "BR-TO": { nome: "Tocantins", uf: "TO", quantidade: 0, regiao: "N", cidades: [] }
+            };
+
+            // Elementos DOM
+            const tooltip = document.getElementById("tooltip");
+            const tooltipStateName = document.getElementById("tooltipStateName");
+            const tooltipUF = document.getElementById("tooltipUF");
+            const tooltipBadgeCount = document.getElementById("tooltipBadgeCount");
+            const tooltipStatusText = document.getElementById("tooltipStatusText");
+
+            const labelUFSelected = document.getElementById("labelUFSelected");
+            const titleEstadoSelected = document.getElementById("titleEstadoSelected");
+            const badgeCountSelected = document.getElementById("badgeCountSelected");
+            const stateDefaultMessage = document.getElementById("stateDefaultMessage");
+            const listaEmpreendimentosContent = document.getElementById("listaEmpreendimentosContent");
+            const inputBuscaEstado = document.getElementById("inputBuscaEstado");
+            const btnClearSearch = document.getElementById("btnClearSearch");
+            const btnResetView = document.getElementById("btnResetView");
+
+            let estadoAtualSelecionadoId = null;
+
+            // 1. APLICAR ESTILOS INICIAIS AO SVG BASEADO NOS DADOS
+            Object.keys(estadosData).forEach(id => {
+                const path = document.getElementById(id);
+                if (path) {
+                    const info = estadosData[id];
+                    if (info.quantidade > 10) {
+                        path.classList.add("estado-ativo-alta");
+                    } else if (info.quantidade > 0) {
+                        path.classList.add("estado-ativo");
+                    }
+
+                    // Eventos de Mouse no Estado
+                    path.addEventListener("mouseenter", (e) => onMouseEnterEstado(e, id));
+                    path.addEventListener("mousemove", (e) => onMouseMoveEstado(e));
+                    path.addEventListener("mouseleave", () => onMouseLeaveEstado(id));
+                    path.addEventListener("click", () => selecionarEstado(id));
+                }
+            });
+
+            // 2. LÓGICA DO TOOLTIP FLUTUANTE
+            function onMouseEnterEstado(e, id) {
+                const info = estadosData[id];
+                if (!info) return;
+
+                tooltipStateName.textContent = info.nome;
+                tooltipUF.textContent = info.uf;
+                tooltipBadgeCount.textContent = info.quantidade;
+
+                if (info.quantidade > 0) {
+                    tooltipStatusText.innerHTML = `<span class="text-emerald-600 font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3"></i> Empreendimentos disponíveis</span>`;
+                } else {
+                    tooltipStatusText.innerHTML = `<span class="text-slate-400">Sem empreendimentos cadastrados</span>`;
+                }
+
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                tooltip.classList.remove("hidden");
+                setTimeout(() => tooltip.classList.remove("opacity-0"), 10);
+            }
+
+            function onMouseMoveEstado(e) {
+                const x = e.clientX + 16;
+                const y = e.clientY + 16;
+                tooltip.style.left = `${x}px`;
+                tooltip.style.top = `${y}px`;
+            }
+
+            function onMouseLeaveEstado(id) {
+                tooltip.classList.add("opacity-0");
+                setTimeout(() => tooltip.classList.add("hidden"), 150);
+            }
+
+            // 3. SELEÇÃO DE ESTADO E ATUALIZAÇÃO DO PAINEL LATERAL
+            function selecionarEstado(id) {
+                const info = estadosData[id];
+                if (!info) return;
+
+                // Remover seleção anterior
+                if (estadoAtualSelecionadoId) {
+                    const prevPath = document.getElementById(estadoAtualSelecionadoId);
+                    if (prevPath) prevPath.classList.remove("estado-selecionado");
+                }
+
+                // Destacar novo estado
+                estadoAtualSelecionadoId = id;
+                const currentPath = document.getElementById(id);
+                if (currentPath) {
+                    currentPath.classList.add("estado-selecionado");
+                }
+
+                // Atualizar Header do Painel
+                labelUFSelected.textContent = `${info.nome} (${info.uf})`;
+                titleEstadoSelected.textContent = info.nome;
+                badgeCountSelected.children[0].textContent = info.quantidade;
+                badgeCountSelected.classList.remove("hidden");
+
+                // Renderizar Lista de Empreendimentos
+                renderizarListaEmpreendimentos(info);
+            }
+
+            function renderizarListaEmpreendimentos(info) {
+                stateDefaultMessage.classList.add("hidden");
+                listaEmpreendimentosContent.classList.remove("hidden");
+                listaEmpreendimentosContent.innerHTML = "";
+
+                if (info.cidades.length === 0) {
+                    listaEmpreendimentosContent.innerHTML = `
+                        <div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-slate-200/60 my-4">
+                            <i data-lucide="building-2" class="w-10 h-10 mx-auto text-slate-300 mb-2"></i>
+                            <p class="text-sm font-semibold text-slate-600">Nenhum empreendimento ativo</p>
+                            <p class="text-xs text-slate-400 mt-1">Atualmente não há unidades credenciadas para este estado no edital vigente.</p>
+                        </div>
+                    `;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    return;
+                }
+
+                info.cidades.forEach((item) => {
+                    let badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                    if (item.status === "Em Construção") badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
+                    if (item.status === "Lançamento") badgeColor = "bg-blue-100 text-blue-800 border-blue-200";
+                    if (item.status === "Concluído") badgeColor = "bg-slate-100 text-slate-700 border-slate-200";
+
+                    const cardHTML = `
+                        <div class="p-3.5 bg-slate-50 hover:bg-blue-50/50 rounded-xl border border-slate-200/80 transition-all group">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors flex items-center gap-1.5">
+                                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
+                                        ${item.nome}
+                                    </h4>
+                                    <p class="text-xs font-medium text-slate-600 mt-0.5">${item.tipo}</p>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeColor} shrink-0">
+                                    ${item.status}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    listaEmpreendimentosContent.insertAdjacentHTML("beforeend", cardHTML);
+                });
+
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+
+            // 4. PESQUISA POR DIGITAÇÃO
+            inputBuscaEstado.addEventListener("input", function (e) {
+                const query = e.target.value.trim().toLowerCase();
+
+                if (query.length > 0) {
+                    btnClearSearch.classList.remove("hidden");
+                } else {
+                    btnClearSearch.classList.add("hidden");
+                }
+
+                if (!query) return;
+
+                // Procurar estado por Nome ou UF
+                const matchId = Object.keys(estadosData).find(id => {
+                    const est = estadosData[id];
+                    return est.nome.toLowerCase().includes(query) || est.uf.toLowerCase() === query;
+                });
+
+                if (matchId) {
+                    selecionarEstado(matchId);
+                }
+            });
+
+            btnClearSearch.addEventListener("click", function () {
+                inputBuscaEstado.value = "";
+                btnClearSearch.classList.add("hidden");
+                resetarVisao();
+            });
+
+            // 5. FILTROS POR REGIÃO
+            const btnsRegiao = document.querySelectorAll(".btn-regiao");
+            btnsRegiao.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    const regiao = this.getAttribute("data-regiao");
+
+                    btnsRegiao.forEach(b => {
+                        b.classList.remove("bg-blue-600", "text-white", "active");
+                        b.classList.add("bg-slate-100", "text-slate-700");
+                    });
+                    this.classList.remove("bg-slate-100", "text-slate-700");
+                    this.classList.add("bg-blue-600", "text-white", "active");
+
+                    // Destacar estados da região no SVG
+                    Object.keys(estadosData).forEach(id => {
+                        const path = document.getElementById(id);
+                        if (!path) return;
+
+                        const info = estadosData[id];
+                        if (regiao === "TODAS" || info.regiao === regiao) {
+                            path.style.opacity = "1";
+                        } else {
+                            path.style.opacity = "0.25";
+                        }
+                    });
+                });
+            });
+
+            // 6. REDEFINIR VISÃO
+            function resetarVisao() {
+                if (estadoAtualSelecionadoId) {
+                    const prevPath = document.getElementById(estadoAtualSelecionadoId);
+                    if (prevPath) prevPath.classList.remove("estado-selecionado");
+                    estadoAtualSelecionadoId = null;
+                }
+
+                // Reset Opacidade de Regiões
+                Object.keys(estadosData).forEach(id => {
+                    const path = document.getElementById(id);
+                    if (path) path.style.opacity = "1";
+                });
+
+                // Reset Filtro Chips
+                btnsRegiao.forEach(b => {
+                    b.classList.remove("bg-blue-600", "text-white", "active");
+                    b.classList.add("bg-slate-100", "text-slate-700");
+                });
+                if (btnsRegiao[0]) {
+                    btnsRegiao[0].classList.remove("bg-slate-100", "text-slate-700");
+                    btnsRegiao[0].classList.add("bg-blue-600", "text-white", "active");
+                }
+
+                labelUFSelected.textContent = "Brasil (Visão Geral)";
+                titleEstadoSelected.textContent = "Selecione um Estado no Mapa";
+                badgeCountSelected.classList.add("hidden");
+
+                stateDefaultMessage.classList.remove("hidden");
+                listaEmpreendimentosContent.classList.add("hidden");
+            }
+
+            btnResetView.addEventListener("click", resetarVisao);
+
+        });
+    </script>
+</body>
+</html>
